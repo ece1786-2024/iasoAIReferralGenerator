@@ -46,6 +46,9 @@ it should be free-flowing, such as a patient who came for a general consultation
 or an emergency room doctor urgently ushers their patient to a specialist.
 Generate just one conversation.
 
+Additionally, after the conversation, generate doctor's clinical notes for the patient.
+These notes could be something like short sentences that give the doctor's thoughts while the talking to the patient, without saying it out loud to the patient.
+Ensure that the clinical notes are explicitly identified by "Clinical notes:" to allow for parsing.
 """
     return prompt
 
@@ -56,29 +59,55 @@ def generate_convo(condition):
             {"role": "system", "content": "You are a tool that generates patient-doctor conversations with the required specifications."},
             {"role": "user", "content": prompt(condition)}
         ],
-        temperature=0.7,
+        temperature=1.0,
         top_p=0.80,
         max_tokens=4096
     )
     convo = response.choices[0].message.content
     return convo
 
-conditions = ["has asthma", "has COPD", "has a cough", "has shortness of breath", "is a smoker who smokes [insert a realistic number] packs per day"]
+def save_clinical_notes(condition, text_string, output_filename="clinical_notes.txt"):
+    keyword = 'Clinical notes:'
+    keyword_index = text_string.find(keyword)
+
+    convo, clinical_notes = "", ""
+
+    if keyword_index != -1:
+        convo = text_string[:keyword_index].strip()
+        clinical_notes = text_string[keyword_index + len(keyword):].strip()
+
+        with open(output_filename, 'a') as f:
+            f.write(f"Condition: {condition}\n")
+            f.write(clinical_notes)
+            f.write("\n\n")
+        print(f"Clinical notes saved to {output_filename}")
+    else:
+        print("Clinical notes keyword not found in the string.")
+
+    return convo, clinical_notes
+
+conditions = ["has asthma", "has COPD", "has a cough", "has shortness of breath",
+              "is a smoker who smokes [insert a realistic number] packs per day"]
 
 with open("conversations.txt", "w") as f:
+    pass
+
+with open("clinical_notes.txt", "w") as f:
     pass
 
 with open("conversations.txt", "a") as f:
     for condition in conditions:
         print(f"Condition: {condition}", file=f)
-        conversation = generate_convo(condition)
+        output = generate_convo(condition)
+        convo, notes = save_clinical_notes(condition, output)
         print("Begin Conversation: \n", file=f)
-        print(conversation, file=f)
+        print(convo, file=f)
         print("\nEnd Conversation", file=f)
         print("\n\n", file=f)
 
         print(f"Condition: {condition}")
         print("Begin Conversation: \n")
-        print(conversation)
+        print(output)
         print("\nEnd Conversation")
         print("\n\n")
+
