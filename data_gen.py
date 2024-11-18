@@ -1,9 +1,14 @@
 import openai
+import polars as pl
+import pathlib
+from config import Config
 
-openai.api_key = '' # Insert API Key
 
-def prompt(condition):
-    prompt = f"""
+def data_gen_prompt(condition):
+    # return prompts formatted according to the given condition
+    system_prompt = "You are a tool that generates patient-doctor conversations with the required specifications."
+
+    user_prompt = f"""
 I want you to generate transcripts of conversations between patients and doctors.
 The conversations will contain information about a patient being referred to a respiratory specialist.
 The Markham Stouffville Hospital will make the referral.
@@ -41,64 +46,80 @@ Additionally, after the conversation, generate doctor's clinical notes for the p
 These notes could be something like short sentences that give the doctor's thoughts while the talking to the patient, without saying it out loud to the patient.
 Ensure that the clinical notes are explicitly identified by "Clinical notes:" to allow for parsing.
 """
-    return prompt
 
-def generate_convo(condition):
+    return system_prompt, user_prompt
+
+
+def gen_convo(condition):
+    # get prompts for given condition
+    system_prompt, user_prompt = data_gen_prompt(condition)
+    
+    # call OpenAI api with prompt
     response = openai.chat.completions.create(
         model="gpt-4o",
         messages=[
-            {"role": "system", "content": "You are a tool that generates patient-doctor conversations with the required specifications."},
-            {"role": "user", "content": prompt(condition)}
+            {"role": "system", "content": system_prompt},
+            {"role": "user", "content": user_prompt}
         ],
         temperature=1.0,
         top_p=0.80,
         max_tokens=4096
     )
     convo = response.choices[0].message.content
+
     return convo
 
-def save_clinical_notes(condition, text_string, output_filename="clinical_notes.txt"):
+
+def get_convo_clinical_notes(text_string):
+    # look for Clinical notes keyword in generated output
     keyword = 'Clinical notes:'
     keyword_index = text_string.find(keyword)
 
-    convo, clinical_notes = "", ""
-
-    if keyword_index != -1:
+    # get the conov and clinical notes from generated output
+    convo, clinical_notes = text_string.strip(), ""
+    if keyword_index != -1: # split text at clinical notes keyword
         convo = text_string[:keyword_index].strip()
         clinical_notes = text_string[keyword_index + len(keyword):].strip()
-
-        with open(output_filename, 'a') as f:
-            f.write(f"Condition: {condition}\n")
-            f.write(clinical_notes)
-            f.write("\n\n")
-        print(f"Clinical notes saved to {output_filename}")
     else:
-        print("Clinical notes keyword not found in the string.")
+        print("Clinical notes not found in generated text!")
 
     return convo, clinical_notes
 
-conditions = ["has asthma", "has COPD", "has a cough", "has shortness of breath",
-              "is a smoker who smokes [insert a realistic number] packs per day"]
 
-with open("conversations.txt", "w") as f:
-    pass
+if __name__ == "__main__":
+    config = Config()
 
-with open("clinical_notes.txt", "w") as f:
-    pass
+    # get the API_KEY
+    openai.api_key = config.API_KEY
 
-with open("conversations.txt", "a") as f:
+    # lists to store conditions and the generated conversations 
+    conditions = ["has asthma", "has COPD", "has a cough",
+                  "has shortness of breath",
+                  "is a smoker who smokes [insert a realistic number] packs per day"]
+    convos, clinical_notes = [], []
+
+    # generate conversations and clinical notes for each condition
+    print("Generating Simulated Patient Doctor Conversations and Clinical Notes:")
     for condition in conditions:
-        print(f"Condition: {condition}", file=f)
-        output = generate_convo(condition)
-        convo, notes = save_clinical_notes(condition, output)
-        print("Begin Conversation: \n", file=f)
-        print(convo, file=f)
-        print("\nEnd Conversation", file=f)
-        print("\n\n", file=f)
-
+        # call gpt and get the convo and notes
         print(f"Condition: {condition}")
-        print("Begin Conversation: \n")
-        print(output)
-        print("\nEnd Conversation")
-        print("\n\n")
+        output = gen_convo(condition)
+        convo, notes = get_convo_clinical_notes(output)
 
+        # add convo and clinical notes to list of convos and notes
+        convos = convos + [convo]
+        clinical_notes = clinical_notes + [notes]
+    
+    # save generated interactions to df
+    df = pl.DataFrame(
+        data = {
+            "condition": conditions,
+            "conversation": convos,
+            "clinical_note": clinical_notes
+        },
+        schema={"condition": pl.String, "conversation": pl.String,
+                "clinical_note": pl.String}
+    )
+    print(f"Saving Generated Data to: {config.generation_output_path}")
+    pathlib.Path('data').mkdir(parents=True, exist_ok=True) 
+    df.write_parquet(config.generation_output_path)
