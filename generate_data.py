@@ -132,6 +132,12 @@ if __name__ == "__main__":
         schema={"condition": pl.String, "conversation": pl.String,
                 "clinical_note": pl.String}
     )
+<<<<<<< HEAD:data_gen.py
     print(f"Saving Generated Data to: {config.generation_output_path}")
     pathlib.Path('data').mkdir(parents=True, exist_ok=True)
     df.write_parquet(config.generation_output_path)
+=======
+    print(f"Saving Generated Data to: {config.generation_output_path} \n")
+    pathlib.Path('outputs').mkdir(parents=True, exist_ok=True) 
+    df.write_parquet(config.generation_output_path)
+>>>>>>> 52fa6dc (added progress report code):generate_data.py
