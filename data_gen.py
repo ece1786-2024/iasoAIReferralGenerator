@@ -2,6 +2,7 @@ import openai
 import polars as pl
 import pathlib
 from config import Config
+import random
 
 
 def data_gen_prompt(condition):
@@ -21,7 +22,7 @@ To this end, the conversation should have the following information:
 6) the preferred language of the patient,
 7) the name and number of the interpreter, if the patient needs one (optional),
 8) one of either 'COPD Clinic with Respirologist Consultation' or 'Asthma Education Clinic with Asthma Educator (RRT),' and
-9) the reason for the referral (in this case, the patient {condition}).
+9) the reason for the referral (in this case, the patient has the following conditions:{condition}).
 
 The above is the general referral information.
 In terms of patient information, the conversation should contain the following:
@@ -92,24 +93,35 @@ if __name__ == "__main__":
     # get the API_KEY
     openai.api_key = config.API_KEY
 
-    # lists to store conditions and the generated conversations 
-    conditions = ["has asthma", "has COPD", "has a cough",
+    # lists to store conditions and the generated conversations
+    condition_list = ["has asthma", "has COPD", "has a cough",
                   "has shortness of breath",
                   "is a smoker who smokes [insert a realistic number] packs per day"]
     convos, clinical_notes = [], []
+    # Number of examples to generate
+    num_examples = 100
+    all_examples = []
 
-    # generate conversations and clinical notes for each condition
-    print("Generating Simulated Patient Doctor Conversations and Clinical Notes:")
-    for condition in conditions:
-        # call gpt and get the convo and notes
-        print(f"Condition: {condition}")
-        output = gen_convo(condition)
+    for _ in range(num_examples):
+        # Randomly determine how many conditions the patient has
+        num_conditions = random.randint(1, len(condition_list))  # Random number of conditions
+
+        # Randomly select the conditions
+        selected_conditions = random.sample(condition_list, num_conditions)
+
+        # Create a dictionary of all conditions with True/False values
+        conditions = {cond: (cond in selected_conditions) for cond in condition_list}
+
+        # Convert the conditions to a string format for the prompt
+        condition_string = ", ".join(f"{key}:{value}" for key, value in conditions.items())
+
+        output = gen_convo(condition=condition_string)
         convo, notes = get_convo_clinical_notes(output)
 
         # add convo and clinical notes to list of convos and notes
         convos = convos + [convo]
         clinical_notes = clinical_notes + [notes]
-    
+
     # save generated interactions to df
     df = pl.DataFrame(
         data = {
@@ -121,5 +133,5 @@ if __name__ == "__main__":
                 "clinical_note": pl.String}
     )
     print(f"Saving Generated Data to: {config.generation_output_path}")
-    pathlib.Path('data').mkdir(parents=True, exist_ok=True) 
+    pathlib.Path('data').mkdir(parents=True, exist_ok=True)
     df.write_parquet(config.generation_output_path)
