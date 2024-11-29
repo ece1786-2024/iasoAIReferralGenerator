@@ -6,10 +6,40 @@ proof-of-concept which generates a doctor's referral form based on
 patient-doctor conversation transcript and a doctor's clinical note.
 
 ## Usage
-Instructions here
+This system requires access to OpenAI's API, which requries an API key.
+An API key can be generated on their platform 
+here: https://platform.openai.com/docs/overview
+
+Please add your API key to config.py
+
+To install the required libraries for this system please run the following
+command:
+
+```bash
+pip install -r requirements.txt
+```
+
+To run the entire system use the following bash command
+
+Note: if permissions are denied, then try; `chmod +x main.sh`
 
 ``` bash
-bash instructions here
+./main.sh
+```
+
+To run the data generation script use the follow command:
+```bash
+python data_gen.py
+```
+
+To run the extraction script use the follow command:
+```bash
+python extractor.py
+```
+
+To run the evaluation script use the follow command:
+```bash
+python evaluate.py
 ```
 
 ## Format

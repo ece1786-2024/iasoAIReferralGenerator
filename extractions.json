@@ -1,0 +1,145 @@
+{
+    "examples": [
+      {
+        "actualLabel": {
+          "COPD_clinic": false,
+          "Asthma_education": true,
+          "Smoking_packs_per_day": 0,
+          "clinical_information": {
+            "COPD": false,
+            "Cough": false,
+            "Shortness_of_breath": false,
+            "Asthma": true,
+            "Smoking": false
+          },
+          "Other": "Patient has history of asthma and trouble breathing"
+        },
+        "predictedOutput": {
+          "COPD_clinic": false,
+          "Asthma_education": true,
+          "Smoking_packs_per_day": 0,
+          "clinical_information": {
+            "COPD": false,
+            "Cough": false,
+            "Shortness_of_breath": true,
+            "Asthma": true,
+            "Smoking": false
+          },
+          "Other": ""
+        }
+      },
+      {
+        "actualLabel": {
+          "COPD_clinic": true,
+          "Asthma_education": false,
+          "Smoking_packs_per_day": 0,
+          "clinical_information": {
+            "COPD": true,
+            "Cough": false,
+            "Shortness_of_breath": true,
+            "Asthma": false,
+            "Smoking": false
+          },
+          "Other": "patient has copd, symptoms became worse recently"
+        },
+        "predictedOutput": {
+          "COPD_clinic": true,
+          "Asthma_education": false,
+          "Smoking_packs_per_day": 0,
+          "clinical_information": {
+            "COPD": true,
+            "Cough": false,
+            "Shortness_of_breath": true,
+            "Asthma": false,
+            "Smoking": false
+          },
+          "Other": ""
+        }
+      },
+      {
+        "actualLabel": {
+          "COPD_clinic": false,
+          "Asthma_education": false,
+          "Smoking_packs_per_day": 0,
+          "clinical_information": {
+            "COPD": false,
+            "Cough": true,
+            "Shortness_of_breath": false,
+            "Asthma": false,
+            "Smoking": false
+          },
+          "Other": "Patient has persistent cough"
+        },
+        "predictedOutput": {
+          "COPD_clinic": true,
+          "Asthma_education": false,
+          "Smoking_packs_per_day": 0,
+          "clinical_information": {
+            "COPD": false,
+            "Cough": true,
+            "Shortness_of_breath": false,
+            "Asthma": false,
+            "Smoking": false
+          },
+          "Other": ""
+        }
+      },
+      {
+        "actualLabel": {
+          "COPD_clinic": true,
+          "Asthma_education": false,
+          "Smoking_packs_per_day": 0,
+          "clinical_information": {
+            "COPD": false,
+            "Cough": false,
+            "Shortness_of_breath": true,
+            "Asthma": false,
+            "Smoking": false
+          },
+          "Other": "Patient has shortness of breath"
+        },
+        "predictedOutput": {
+          "COPD_clinic": true,
+          "Asthma_education": false,
+          "Smoking_packs_per_day": 0,
+          "clinical_information": {
+            "COPD": false,
+            "Cough": false,
+            "Shortness_of_breath": true,
+            "Asthma": false,
+            "Smoking": false
+          },
+          "Other": ""
+        }
+      },
+      {
+        "actualLabel": {
+          "COPD_clinic": true,
+          "Asthma_education": false,
+          "Smoking_packs_per_day": 1,
+          "clinical_information": {
+            "COPD": false,
+            "Cough": true,
+            "Shortness_of_breath": false,
+            "Asthma": false,
+            "Smoking": true
+          },
+          "Other": "Patient is a smoker and has persistent cough"
+        },
+        "predictedOutput": {
+          "COPD_clinic": true,
+          "Asthma_education": false,
+          "Smoking_packs_per_day": 1,
+          "clinical_information": {
+            "COPD": true,
+            "Cough": true,
+            "Shortness_of_breath": false,
+            "Asthma": false,
+            "Smoking": true
+          },
+          "Other": "Patient requires asthma evaluation."
+        }
+      }
+    ]
+  }
+  
