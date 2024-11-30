@@ -7,7 +7,7 @@ class Field:
 
 class Config:
     def __init__(self):
-        self.API_KEY = "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"
+        self.API_KEY = "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"
         self.generation_output_path = "outputs/data.parquet"
         self.extraction_output_path = "outputs/extractions.parquet"
         self.evaluation_output_path = "outputs/evaluation.parquet"
