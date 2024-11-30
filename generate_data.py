@@ -5,10 +5,13 @@ from config import Config
 import random
 
 
-def data_gen_prompt(condition):
+def data_gen_prompt(condition, other_condition):
     # return prompts formatted according to the given condition
     system_prompt = "You are a tool that generates patient-doctor conversations with the required specifications."
-
+    additional_info = (
+        f" The patient is also experiencing: {other_condition}"
+        if other_condition else ""
+    )
     user_prompt = f"""
 I want you to generate transcripts of conversations between patients and doctors.
 The conversations will contain information about a patient being referred to a respiratory specialist.
@@ -23,6 +26,8 @@ To this end, the conversation should have the following information:
 7) the name and number of the interpreter, if the patient needs one (optional),
 8) one of either 'COPD Clinic with Respirologist Consultation' or 'Asthma Education Clinic with Asthma Educator (RRT),' and
 9) the reason for the referral (in this case, the patient has the following conditions:{condition}).
+
+{additional_info}.
 
 The above is the general referral information.
 In terms of patient information, the conversation should contain the following:
@@ -51,10 +56,11 @@ Ensure that the clinical notes are explicitly identified by "Clinical notes:" to
     return system_prompt, user_prompt
 
 
-def gen_convo(condition):
+
+def gen_convo(condition, other_condition):
     # get prompts for given condition
-    system_prompt, user_prompt = data_gen_prompt(condition)
-    
+    system_prompt, user_prompt = data_gen_prompt(condition, other_condition)
+
     # call OpenAI api with prompt
     response = openai.chat.completions.create(
         model="gpt-4o",
@@ -71,7 +77,7 @@ def gen_convo(condition):
     return convo
 
 
-def get_convo_clinical_notes(text_string):
+def get_convo_clinical_notes(text_string, other_condition):
     # look for Clinical notes keyword in generated output
     keyword = 'Clinical notes:'
     keyword_index = text_string.find(keyword)
@@ -81,10 +87,16 @@ def get_convo_clinical_notes(text_string):
     if keyword_index != -1: # split text at clinical notes keyword
         convo = text_string[:keyword_index].strip()
         clinical_notes = text_string[keyword_index + len(keyword):].strip()
+        if other_condition:
+          clinical_notes += f" Additionally, the patient is experiencing: {other_condition}."
     else:
         print("Clinical notes not found in generated text!")
 
     return convo, clinical_notes
+
+
+
+
 
 
 if __name__ == "__main__":
@@ -97,40 +109,58 @@ if __name__ == "__main__":
     condition_list = ["has asthma", "has COPD", "has a cough",
                   "has shortness of breath",
                   "is a smoker who smokes [insert a realistic number] packs per day"]
-    convos, clinical_notes = [], []
-    # Number of examples to generate
+
+    other_conditions = [
+        "Pulmonary Fibrosis", "Interstitial Lung Disease", "Bronchiectasis",
+        "Allergic Rhinitis", "Chronic Bronchitis", "Emphysema",
+        "Lung Cancer", "Sarcoidosis", "Pneumonia", "Pleural Effusion"
+    ]
+
+    convos, clinical_notes, all_conditions, all_other_conditions = [], [], [], []    # Number of examples to generate
     num_examples = 100
     all_examples = []
 
-    for _ in range(num_examples):
+
+    for i in range(num_examples):
+        print(f"Generating example {i+1} of {num_examples}")
         # Randomly determine how many conditions the patient has
         num_conditions = random.randint(1, len(condition_list))  # Random number of conditions
 
         # Randomly select the conditions
         selected_conditions = random.sample(condition_list, num_conditions)
 
+        # 20% chance to select a condition, otherwise return None
+        other_condition = None
+        r = random.random()
+        if r <= 0.2:
+            other_condition = random.choice(other_conditions)
+            print(f"Other condition: {other_condition}")
+
         # Create a dictionary of all conditions with True/False values
         conditions = {cond: (cond in selected_conditions) for cond in condition_list}
-
+        print(f"Conditions: {conditions}")
         # Convert the conditions to a string format for the prompt
         condition_string = ", ".join(f"{key}:{value}" for key, value in conditions.items())
 
-        output = gen_convo(condition=condition_string)
-        convo, notes = get_convo_clinical_notes(output)
+        output = gen_convo(condition=condition_string, other_condition = other_condition)
+        convo, notes = get_convo_clinical_notes(output, other_condition)
 
         # add convo and clinical notes to list of convos and notes
         convos = convos + [convo]
         clinical_notes = clinical_notes + [notes]
+        all_conditions = all_conditions + [condition_string]
+        all_other_conditions = all_other_conditions + [other_condition]
 
     # save generated interactions to df
     df = pl.DataFrame(
         data = {
-            "condition": conditions,
+            "condition": all_conditions,
             "conversation": convos,
-            "clinical_note": clinical_notes
+            "clinical_note": clinical_notes,
+            "other_condition": all_other_conditions
         },
         schema={"condition": pl.String, "conversation": pl.String,
-                "clinical_note": pl.String}
+                "clinical_note": pl.String, "other_condition": pl.String}
     )
     print(f"Saving Generated Data to: {config.generation_output_path} \n")
     pathlib.Path('outputs').mkdir(parents=True, exist_ok=True) 
