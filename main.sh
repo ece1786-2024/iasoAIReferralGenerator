@@ -7,8 +7,8 @@ set -e
 source .venv/bin/activate
 
 # Run the Python script
-python data_gen.py
-python extractor.py
+python generate_data.py
+python extract_fields.py
 python evaluate.py
 
 # Deactivate the virtual environment

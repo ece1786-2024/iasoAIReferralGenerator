@@ -2,13 +2,13 @@ class Field:
     def __init__(self):
         self.single_field = ['copd_clinic', 'asthma_education_clinic']
         self.multi_field = ['copd', 'asthma', 'shortness_of_breath', 'cough',
-                    'smoker', 'packs_per_day']
+                    'smoker']
         self.text_fields = ['other']
 
 class Config:
     def __init__(self):
-        self.API_KEY = "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"
-        self.generation_output_path = "data/data.parquet"
+        self.API_KEY = "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"
+        self.generation_output_path = "outputs/data.parquet"
         self.extraction_output_path = "outputs/extractions.parquet"
         self.evaluation_output_path = "outputs/evaluation.parquet"
         self.evaluation_html_output_path = "outputs/evaluation.html"
