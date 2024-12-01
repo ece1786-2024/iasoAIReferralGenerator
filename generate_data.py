@@ -56,7 +56,6 @@ Ensure that the clinical notes are explicitly identified by "Clinical notes:" to
     return system_prompt, user_prompt
 
 
-
 def gen_convo(condition, other_condition):
     # get prompts for given condition
     system_prompt, user_prompt = data_gen_prompt(condition, other_condition)
@@ -93,10 +92,6 @@ def get_convo_clinical_notes(text_string, other_condition):
         print("Clinical notes not found in generated text!")
 
     return convo, clinical_notes
-
-
-
-
 
 
 if __name__ == "__main__":

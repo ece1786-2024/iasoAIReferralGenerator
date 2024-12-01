@@ -3,35 +3,52 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score
 from nltk.translate.bleu_score import sentence_bleu, SmoothingFunction
 import pathlib
 from config import Config
+from sklearn.metrics import precision_score
+
+
+def calculate_precision_recall_accuracy(df, pred_col, label_col):
+    # Calculate true positives and false positives
+    tp = ((df[pred_col] == 1) & (df[label_col] == 1)).sum()
+    fp = ((df[pred_col] == 1) & (df[label_col] == 0)).sum()
+    tn = ((df[pred_col] == 0) & (df[label_col] == 0)).sum()
+    fn = ((df[pred_col] == 0) & (df[label_col] == 1)).sum()
+    
+    # Calculate precision
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 1.0
+
+    # Calculate precision
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 1.0
+
+    # Calculate precision
+    accuracy = tp + tn / (tp + fp + tn + fn) if (tp + fp + tn + fn) > 0 else 1.0
+    
+    # Create a new DataFrame with the precision value
+    analysis_df = pl.DataFrame({"precision": [precision],
+                                 "recall": [recall],
+                                 "accuracy": [accuracy],})
+    
+    return analysis_df
 
 
 def evaluate_single_field(df, field):
-    df = df.with_columns(
-        (pl.col(f'{field}_pred') == pl.col(f'{field}_label'))
-        .alias(f'{field}_accuracy')
-    )
-    df = df[f'{field}_accuracy'].mean()
-    return df
+    pred_col, label_col = f'{field}_pred', f'{field}_pred'
+    df = calculate_precision_recall_accuracy(df, pred_col, label_col)
+    df = df.rename({
+        'precision': f'{field}_precision',
+        'recall': f'{field}_recall',
+        'accuracy': f'{field}_accuracy',
+    })
+    return df[f'{field}_accuracy']
 
 
 def evaluate_multi_field(df, field):
-    df = df.with_columns_seq(
-        (pl.col(f'{field}_pred') and pl.col(f'{field}_label'))
-        .alias(f'{field}_tp'),
-        (pl.col(f'{field}_pred') and not pl.col(f'{field}_label'))
-        .alias(f'{field}_fp'),
-        (not pl.col(f'{field}_pred') and not pl.col(f'{field}_label'))
-        .alias(f'{field}_tn'),
-        (not pl.col(f'{field}_pred') and pl.col(f'{field}_label'))
-        .alias(f'{field}_fn'),
-        (pl.col(f'{field}_tp') or pl.col(f'{field}_tn'))
-        .alias(f'{field}_tp_or_tn'),
-        (pl.col(f'{field}_tp') or pl.col(f'{field}_fp'))
-        .alias(f'{field}_tp_or_fp'),
-        (pl.col(f'{field}_tp') or pl.col(f'{field}_fn'))
-        .alias(f'{field}_tp_or_fn')
-    )
-    df = df[f'{field}_accuracy'].mean()
+    pred_col, label_col = f'{field}_pred', f'{field}_pred'
+    df = calculate_precision_recall_accuracy(df, pred_col, label_col)
+    df = df.rename({
+        'precision': f'{field}_precision',
+        'recall': f'{field}_recall',
+        'accuracy': f'{field}_accuracy'
+    })
     return df
 
 
@@ -76,10 +93,19 @@ def evaluate(extractions_df, fields):
         new_df = evaluate_single_field(extractions_df, single_field)
         eval_df = pl.concat([eval_df, new_df]) if not eval_df.is_empty() else new_df
     
+    # evaluate all the multi fields
+    for multi_field in fields['multi_fields']:
+        new_df = evaluate_multi_field(extractions_df, multi_field)
+        eval_df = pl.concat([eval_df, new_df]) if not eval_df.is_empty() else new_df
+    
     return eval_df
 
 
 if __name__ == "__main__":
+    """
+    This script evaluated the results of the extract_fields script.
+    For Single Value Fields, it 
+    """
     config = Config()
 
     # load the extractions dataframe
