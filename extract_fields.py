@@ -37,6 +37,13 @@ The output should be in JSON format and must include the following fields. For a
 
 Use the patient-doctor conversation and clinical notes to populate these fields. If any field cannot be filled directly from the provided data, infer details when reasonable, and leave as false, 0, or "" as appropriate if inference is not possible. Output only the JSON.
 
+You may have to infer some details from the conversation and clinical notes to complete the form such as
+- whether to check the COPD clinic or asthma education clinic checkboxes, which depend on the presence of COPD or asthma in the patient.
+- check the asthma education clinic checkbox if the patient has asthma.
+- check the COPD clinic checkbox if the patient has copd.
+- shortness of breath and cough checkboxes, which depend on the patient's symptoms. which can be discribed without
+the use of the words "shortness of breath" or "cough".
+
 """
 
     user_prompt = f"""
@@ -59,8 +66,8 @@ Output the result as a JSON object.
     return system_prompt, user_prompt
 
 
-def get_verification_prompts(conversation, clinical_notes, extract1,
-                             extract2, extract3):
+def get_verification_prompts(conversation, clinical_notes, extract1): #,
+    #                         extract2, extract3):
     system_prompt = """
 You are an assistant designed to verify extracted fields from patient-doctor conversations and clinical notes to fill out a "Centre for Respiratory Health Referral Form." 
 
@@ -107,12 +114,6 @@ Here are the patient-doctor conversation, clinical notes and the extracted JSONs
 **Extraction1**
 {extract1}
 
-**Extraction2**
-{extract2}
-
-**Extraction3**
-{extract3}
-
 Using the provided conversation, clinical notes, and extractions, populate the "Centre for Respiratory Health Referral Form" fields as described in the instructions. Ensure that:
 - All checkbox fields are `true` or `false`.
 - Missing or unavailable fields are set to false for binary fields, 0 for integer fields, and "" for text fields.
@@ -145,14 +146,14 @@ def extract_fields(conversation: str, clinical_notes: str) -> str:
     return extracted_info
 
 
-def verify_fields(conversation: str, clinical_notes: str,
-                  extraction1: str, extraction2: str, extraction3: str) -> str:
+def verify_fields(conversation: str, clinical_notes: str, extraction1: str) -> str:
+    #               extraction1: str, extraction2: str, extraction3: str) -> str:
     # get prompts
     system_prompt, user_prompt = get_verification_prompts(conversation,
                                                         clinical_notes,
-                                                        extraction1,
-                                                        extraction2,
-                                                        extraction3)
+                                                        extraction1) #,
+    #                                                    extraction2,
+    #                                                    extraction3)
 
     # get api response
     response = openai.chat.completions.create(
@@ -174,15 +175,16 @@ def extract_and_verify_fields(conversation: str, clinical_note: str) -> str:
     # generate 3 different extractions for each set of
     # conversations and clinical notes
     extraction1 = extract_fields(conversation, clinical_note)
-    extraction2 = extract_fields(conversation, clinical_note)
-    extraction3 = extract_fields(conversation, clinical_note)
+    #extraction2 = extract_fields(conversation, clinical_note)
+    #extraction3 = extract_fields(conversation, clinical_note)
 
     # generate a verified extraction using the initial extraction
     verified_extraction = verify_fields(conversation, clinical_note,
-                                        extraction1, extraction2,
-                                        extraction3)
+                                        extraction1) #,extraction2,
+    #                                    extraction3)
 
-    return verified_extraction
+    #return verified_extraction
+    return extraction1
 
 
 if __name__ == "__main__":

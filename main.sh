@@ -10,6 +10,7 @@ source .venv/bin/activate
 python generate_data.py
 python extract_fields.py
 python evaluate.py
+python generate_pdf.py
 
 # Deactivate the virtual environment
 deactivate

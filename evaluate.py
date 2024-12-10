@@ -29,7 +29,8 @@ def get_labels(df):
         labels_dict = {map_names[cond.split(':')[0]]:bool_from_string(cond.split(':')[1])
                        for cond in df['condition'][i].split(',')}
         
-        labels_dict['copd_clinic'] = True if labels_dict['copd'] else False
+        labels_dict['copd_clinic'] = True\
+            if labels_dict['copd'] else False
         labels_dict['asthma_education_clinic'] = True\
             if labels_dict['asthma'] else False
         

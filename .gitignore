@@ -3,3 +3,6 @@
 outputs/
 tmp/
 data/
+referrals/
+.DS_Store
+.git/
